@@ -1,0 +1,417 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "boatrace-evaluation-responses/1",
+  "$defs": {
+    "item": {
+      "type": "object",
+      "properties": {
+        "evaluation_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,100}$"
+        },
+        "status": {
+          "enum": [
+            "AVAILABLE",
+            "HELD"
+          ]
+        },
+        "registration_state": {
+          "enum": [
+            "RECEIVING",
+            "STAGED",
+            "VERIFIED",
+            "REGISTERED",
+            "HELD",
+            "FAILED"
+          ]
+        },
+        "visibility": {
+          "enum": [
+            "PRIVATE",
+            "VISIBLE",
+            "SUPERSEDED",
+            "WITHDRAWN"
+          ]
+        },
+        "is_latest": {
+          "type": "boolean"
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "$ref": "../boatrace-evaluation-transfer/1#/properties/summary"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reasons": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "type": "string",
+            "maxLength": 200
+          }
+        },
+        "source_type": {
+          "enum": [
+            "LEGACY_TRANSFER",
+            "CLOUD_VIEW"
+          ]
+        }
+      },
+      "required": [
+        "evaluation_id",
+        "status",
+        "registration_state",
+        "visibility",
+        "is_latest",
+        "summary",
+        "reasons"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "AVAILABLE"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "summary": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "const": "AVAILABLE"
+                  }
+                },
+                "required": [
+                  "status"
+                ]
+              },
+              "registration_state": {
+                "const": "REGISTERED"
+              },
+              "reasons": {
+                "type": "array",
+                "maxItems": 0
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "summary": {
+                "type": "null"
+              },
+              "reasons": {
+                "type": "array",
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "detail": {
+      "type": "object",
+      "properties": {
+        "evaluation_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,100}$"
+        },
+        "status": {
+          "enum": [
+            "AVAILABLE",
+            "HELD"
+          ]
+        },
+        "registration_state": {
+          "enum": [
+            "RECEIVING",
+            "STAGED",
+            "VERIFIED",
+            "REGISTERED",
+            "HELD",
+            "FAILED"
+          ]
+        },
+        "visibility": {
+          "enum": [
+            "PRIVATE",
+            "VISIBLE",
+            "SUPERSEDED",
+            "WITHDRAWN"
+          ]
+        },
+        "is_latest": {
+          "type": "boolean"
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "$ref": "../boatrace-evaluation-transfer/1#/properties/summary"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reasons": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "type": "string",
+            "maxLength": 200
+          }
+        },
+        "provenance": {
+          "anyOf": [
+            {
+              "$ref": "../boatrace-evaluation-transfer/1#/properties/provenance"
+            },
+            {
+              "$ref": "#/$defs/cloud_provenance"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source_type": {
+          "enum": [
+            "LEGACY_TRANSFER",
+            "CLOUD_VIEW"
+          ]
+        }
+      },
+      "required": [
+        "evaluation_id",
+        "status",
+        "registration_state",
+        "visibility",
+        "is_latest",
+        "summary",
+        "reasons",
+        "provenance"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "AVAILABLE"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "summary": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "const": "AVAILABLE"
+                  }
+                },
+                "required": [
+                  "status"
+                ]
+              },
+              "registration_state": {
+                "const": "REGISTERED"
+              },
+              "reasons": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "provenance": {
+                "type": "object"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "summary": {
+                "type": "null"
+              },
+              "reasons": {
+                "type": "array",
+                "minItems": 1
+              },
+              "provenance": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "source_type": {
+                "const": "CLOUD_VIEW"
+              },
+              "status": {
+                "const": "AVAILABLE"
+              }
+            },
+            "required": [
+              "source_type",
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "provenance": {
+                "$ref": "#/$defs/cloud_provenance"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "provenance": {
+                "anyOf": [
+                  {
+                    "$ref": "../boatrace-evaluation-transfer/1#/properties/provenance"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "list": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "const": "AVAILABLE"
+        },
+        "items": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "$ref": "#/$defs/item"
+          }
+        },
+        "next_cursor": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,100}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "items",
+        "next_cursor"
+      ],
+      "additionalProperties": false
+    },
+    "session": {
+      "type": "object",
+      "properties": {
+        "role": {
+          "enum": [
+            "viewer",
+            "admin",
+            "registrar"
+          ]
+        },
+        "authentication": {
+          "enum": [
+            "LOCAL_SIGNED_TOKEN",
+            "ACCESS_COMPATIBLE_LOCAL_FIXTURE",
+            "ACCESS_HTTPS_JWKS_LOCAL_INTEGRATION"
+          ]
+        },
+        "local_only": {
+          "const": true
+        },
+        "actual_access_verified": {
+          "const": false
+        }
+      },
+      "required": [
+        "role",
+        "authentication",
+        "local_only"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "authentication": {
+                "enum": ["ACCESS_COMPATIBLE_LOCAL_FIXTURE", "ACCESS_HTTPS_JWKS_LOCAL_INTEGRATION"]
+              }
+            },
+            "required": [
+              "authentication"
+            ]
+          },
+          "then": {
+            "required": [
+              "actual_access_verified"
+            ],
+            "properties": {
+              "actual_access_verified": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "cloud_provenance": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "boatrace-cloud-view-provenance/1"
+        },
+        "references": {
+          "$ref": "../boatrace-cloud-view/1#/properties/references"
+        },
+        "summary_json_utf8": {
+          "type": "string",
+          "maxLength": 200000
+        },
+        "release_allowed": {
+          "const": false
+        },
+        "legal_approval": {
+          "const": "UNKNOWN"
+        },
+        "notice": {
+          "const": "LOCAL_CANDIDATE_NOT_RELEASED"
+        }
+      },
+      "required": [
+        "schema_version",
+        "references",
+        "summary_json_utf8",
+        "release_allowed",
+        "legal_approval",
+        "notice"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

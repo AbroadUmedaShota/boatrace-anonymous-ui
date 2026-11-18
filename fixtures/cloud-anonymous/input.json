@@ -1,0 +1,51 @@
+{
+  "syntheticFixture": true,
+  "notice": "ANONYMOUS_SYNTHETIC_INPUT_NOT_A_REAL_RACE",
+  "date": "2030-01-01",
+  "venueCode": "01",
+  "raceNumber": 1,
+  "mode": "BASE_SAME_DAY",
+  "executionMode": "SAVED_REPLAY",
+  "boats": [
+    {
+      "lane": 1,
+      "national_win_score": 5,
+      "average_st_s": 0.15
+    },
+    {
+      "lane": 2,
+      "national_win_score": 5,
+      "average_st_s": 0.15
+    },
+    {
+      "lane": 3,
+      "national_win_score": 5,
+      "average_st_s": 0.15
+    },
+    {
+      "lane": 4,
+      "national_win_score": 5,
+      "average_st_s": 0.15
+    },
+    {
+      "lane": 5,
+      "national_win_score": 5,
+      "average_st_s": 0.15
+    },
+    {
+      "lane": 6,
+      "national_win_score": 5,
+      "average_st_s": 0.15
+    }
+  ],
+  "odds": null,
+  "priceVerified": false,
+  "captureVerified": false,
+  "clockVerified": false,
+  "observedAt": null,
+  "oddsObservedAt": null,
+  "modelAvailableAt": null,
+  "decisionAt": null,
+  "cutoffAt": null,
+  "sourcePageSha256": []
+}

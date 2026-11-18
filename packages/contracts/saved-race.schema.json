@@ -1,0 +1,765 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://boatrace.invalid/contracts/saved-race/1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "boatrace-saved-race/1"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_-]{1,160}$"
+    },
+    "recordKind": {
+      "enum": [
+        "race",
+        "prediction"
+      ]
+    },
+    "sourceKind": {
+      "enum": [
+        "catalog",
+        "real",
+        "planning",
+        "ticket-snapshot"
+      ]
+    },
+    "raceId": {
+      "type": "string",
+      "pattern": "^race-[0-9]{8}-[0-9]{2}-[0-9]{2}$"
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "venueCode": {
+      "type": "string",
+      "pattern": "^[0-9]{2}$"
+    },
+    "venueName": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "raceNumber": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 12
+    },
+    "title": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "lane": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 6
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "registrationNumber": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "exhibitionSeconds": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "lane",
+          "name",
+          "registrationNumber",
+          "exhibitionSeconds"
+        ]
+      },
+      "maxItems": 6
+    },
+    "model": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "profile": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "sha256": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "availableAt": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "fittedAt": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "profile",
+            "name",
+            "sha256",
+            "availableAt",
+            "fittedAt"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "createdAt": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "decisionAt": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "cutoffAt": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "completedAt": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "saveUpperBound": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "timeMode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "priceStatus": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "probabilityScope": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "oddsObservedAt": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "combinations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[1-6]-[1-6]-[1-6]$"
+      },
+      "maxItems": 120
+    },
+    "probabilities": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "maxItems": 120
+    },
+    "odds": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$"
+      },
+      "maxItems": 120
+    },
+    "storedReasons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "holdReasons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "historicalOnly": {
+      "const": true
+    },
+    "operationalEligible": {
+      "const": false
+    },
+    "currentReusable": {
+      "const": false
+    },
+    "integrity": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "rowSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "finalizationSha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "capturesVerified": {
+          "type": "boolean"
+        },
+        "sourceContextSha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "rowSha256",
+        "finalizationSha256",
+        "capturesVerified",
+        "sourceContextSha256"
+      ]
+    },
+    "ticketSets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "profile": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "state": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "priceScope": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "classificationBasis": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "combination": {
+                  "type": "string"
+                },
+                "probability": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "odds": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "group": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "groupLabel": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "expectedReturnRatio": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "recommended": {
+                  "const": false
+                },
+                "stakeYen": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "combination",
+                "probability",
+                "odds",
+                "group",
+                "groupLabel",
+                "expectedReturnRatio",
+                "recommended",
+                "stakeYen"
+              ]
+            }
+          },
+          "groups": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "MAINLINE": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "count": {
+                    "type": "integer"
+                  },
+                  "coverageProbability": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "expectedReturnRatio": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "groupLabel": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "count",
+                  "coverageProbability",
+                  "expectedReturnRatio",
+                  "groupLabel"
+                ]
+              },
+              "MIDDLE": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "count": {
+                    "type": "integer"
+                  },
+                  "coverageProbability": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "expectedReturnRatio": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "groupLabel": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "count",
+                  "coverageProbability",
+                  "expectedReturnRatio",
+                  "groupLabel"
+                ]
+              },
+              "LONGSHOT": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "count": {
+                    "type": "integer"
+                  },
+                  "coverageProbability": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "expectedReturnRatio": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "groupLabel": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "count",
+                  "coverageProbability",
+                  "expectedReturnRatio",
+                  "groupLabel"
+                ]
+              }
+            }
+          },
+          "mainlineGate": {
+            "anyOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "status": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "returnPercent": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "returnRatio": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "threshold": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "numerator": {
+                        "type": "string"
+                      },
+                      "denominator": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "numerator",
+                      "denominator"
+                    ]
+                  }
+                },
+                "required": [
+                  "status",
+                  "returnPercent",
+                  "returnRatio",
+                  "threshold"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "artifactSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "budgetYen": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "profile",
+          "state",
+          "createdAt",
+          "priceScope",
+          "classificationBasis",
+          "reasons",
+          "candidates",
+          "groups",
+          "mainlineGate",
+          "artifactSha256",
+          "budgetYen"
+        ]
+      }
+    },
+    "missingProfiles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "numericLexemes": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "probabilities": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$"
+          }
+        },
+        "odds": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$"
+          }
+        }
+      },
+      "required": [
+        "probabilities",
+        "odds"
+      ]
+    },
+    "sourceCreatedAt": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "sourcePredictionId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "sourceRaceId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "captureId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "captureUpperAt": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "decisionUpperAt": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "priceContext": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "sourcePredictionId": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "decisionAt": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "cutoffAt": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "oddsObservedAt": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "status",
+            "sourcePredictionId",
+            "decisionAt",
+            "cutoffAt",
+            "oddsObservedAt"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "displayWarnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "recordKind",
+    "sourceKind",
+    "raceId",
+    "date",
+    "venueCode",
+    "venueName",
+    "raceNumber",
+    "title",
+    "entries",
+    "model",
+    "createdAt",
+    "decisionAt",
+    "cutoffAt",
+    "completedAt",
+    "saveUpperBound",
+    "timeMode",
+    "status",
+    "priceStatus",
+    "probabilityScope",
+    "oddsObservedAt",
+    "combinations",
+    "probabilities",
+    "odds",
+    "storedReasons",
+    "holdReasons",
+    "historicalOnly",
+    "operationalEligible",
+    "currentReusable",
+    "integrity",
+    "ticketSets",
+    "missingProfiles",
+    "numericLexemes",
+    "sourceCreatedAt",
+    "sourcePredictionId",
+    "sourceRaceId",
+    "captureId",
+    "captureUpperAt",
+    "decisionUpperAt",
+    "priceContext",
+    "displayWarnings"
+  ]
+}

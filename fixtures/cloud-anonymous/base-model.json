@@ -1,0 +1,50 @@
+{
+  "syntheticFixture": true,
+  "notice": "ANONYMOUS_SYNTHETIC_NOT_TRAINED; calibration fields only imitate the transport contract, not fitting evidence",
+  "schema_version": "boatrace-composite-rank/1",
+  "strict_asof_eligible": false,
+  "operational_eligible": false,
+  "models": {
+    "BASE_CORE": {
+      "profile": "BASE_CORE",
+      "feature_names": [
+        "national_win_score",
+        "average_st_s",
+        "lane_1",
+        "lane_2",
+        "lane_3",
+        "lane_4",
+        "lane_5"
+      ],
+      "continuous_count": 2,
+      "coefficients": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "mean": [
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1
+      ],
+      "temperature": 1,
+      "ridge": 0.001,
+      "converged": true,
+      "convergence": {
+        "converged": true,
+        "iterations": 0,
+        "gradient_inf": 0
+      }
+    },
+    "BASE_FULL": null,
+    "PRE_CORE": null,
+    "PRE_FULL": null
+  }
+}

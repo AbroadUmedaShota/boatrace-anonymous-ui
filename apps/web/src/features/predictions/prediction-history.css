@@ -1,0 +1,23 @@
+.prediction-history-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.prediction-history-list li {
+  min-width: 0;
+  padding-block: 12px;
+  border-top: 1px solid var(--line, #d4dae3);
+}
+.prediction-history-list a {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 16px;
+  padding-block: 6px;
+  color: inherit;
+}
+.prediction-history-list small {
+  color: var(--muted, #617084);
+}
