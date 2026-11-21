@@ -22,22 +22,58 @@ export class PredictionJobs {
  try{assertPredictionUsage(value);}catch{throw new Problem(503,'PREDICTION_USAGE_UNAVAILABLE');}return value;
  }
  async create(value:unknown,owner:string){try{assertPredictionRequest(value);}catch{throw new Problem(400,'INVALID_PREDICTION_REQUEST');}const req=value as PredictionRequest;
- const raw=JSON.stringify({date:req.date,venueCode:req.venueCode,raceNumber:req.raceNumber,mode:req.mode,idempotencyKey:req.idempotencyKey,...('budgetYen'in req?{budgetYen:req.budgetYen}:{})}),hash=await sha256(new TextEncoder().encode(raw));
+ const raw=JSON.stringify({date:req.date,venueCode:req.venueCode,raceNumber:req.raceNumber,mode:req.mode,idempotencyKey:req.idempotencyKey,...('budgetYen'in req?{budgetYen:req.budgetYen}:{}),...(req.exhibitionOnly?{exhibitionOnly:true}:{}),...(req.oddsFromJobId?{oddsFromJobId:req.oddsFromJobId}:{})}),hash=await sha256(new TextEncoder().encode(raw));
  const old=await this.repo.statement('byOwnerKey').bind(owner,req.idempotencyKey).first<Row>();if(old){if(old.hash!==hash)throw new Problem(409,'IDEMPOTENCY_CONFLICT');return this.project(old);}
  this.admission?.(req,owner);
+ if(req.oddsFromJobId){
+  const {result}=await this.exhibitionParent(req,owner,this.executionMode);
+  if(this.executionMode==='LIVE'&&(!result.cutoffAt||!result.observedAt||
+     Date.now()>=Date.parse(result.cutoffAt)||Date.now()-Date.parse(result.observedAt)>=300000))
+   throw new Problem(409,'EXHIBITION_PARENT_STALE');
+ }
  if(this.requireCurrentManualTarget&&this.executionMode==='LIVE'&&!currentManualTarget(req))throw new Problem(400,'TARGET_DATE_MODE_MISMATCH');
  const now=new Date().toISOString(),id='job-'+crypto.randomUUID(),day=new Date(Date.now()+9*3600000).toISOString().slice(0,10);
  const cutoff=new Date(Date.now()-300000).toISOString();
- const inserted=await this.repo.statement(this.requireRecoveryBeforeReservation?'reserveGuarded':'reserve').bind(id,owner,req.idempotencyKey,raw,hash,now,now,this.executionMode,configuredPin(this.inputSha,req.mode)??null,configuredPin(this.modelSha,req.mode)??null,day,req.date,req.venueCode,req.raceNumber,cutoff,...(this.requireRecoveryBeforeReservation?[now,cutoff]:[])).run();
+ const inserted=await this.repo.statement(req.oddsFromJobId?(this.requireRecoveryBeforeReservation?'reserveOddsGuarded':'reserveOdds'):(this.requireRecoveryBeforeReservation?'reserveGuarded':'reserve')).bind(id,owner,req.idempotencyKey,raw,hash,now,now,this.executionMode,configuredPin(this.inputSha,req.mode)??null,configuredPin(this.modelSha,req.mode)??null,day,req.date,req.venueCode,req.raceNumber,cutoff,...(req.oddsFromJobId?[req.oddsFromJobId]:[]),...(this.requireRecoveryBeforeReservation?[now,cutoff]:[])).run();
  if(!inserted.meta.changes){const duplicate=await this.repo.statement('byOwnerKey').bind(owner,req.idempotencyKey).first<Row>();if(duplicate){if(duplicate.hash!==hash)throw new Problem(409,'IDEMPOTENCY_CONFLICT');return this.project(duplicate);}if(this.requireRecoveryBeforeReservation&&await this.repo.statement('expiredUnresolved').bind(now,cutoff).first<Row>())throw new Problem(409,'RECOVERY_REQUIRED');throw new Problem(429,'SHARED_QUOTA_OR_COOLDOWN');}
  if(this.executionMode==='LIVE'&&!this.dataAcquisitionApproved){await this.finish(id,'HELD',['DATA_ACQUISITION_NOT_APPROVED']);return this.detail(id);}
  if(!this.dispatch||!this.inputId){await this.finish(id,'HELD',['DISPATCH_NOT_CONFIGURED']);return this.detail(id);}return this.execute(id);
+ }
+ private async exhibitionParent(request:PredictionRequest, owner:string, executionMode:string){
+  const row=await this.repo.statement('get').bind(request.oddsFromJobId??null).first<Row>();
+  if(!row||row.owner!==owner||row.execution_mode!==executionMode||row.state!=='COMPLETED')
+   throw new Problem(409,'EXHIBITION_PARENT_UNAVAILABLE');
+  const target=JSON.parse(row.request) as PredictionRequest;
+  if(target.exhibitionOnly!==true||target.oddsFromJobId||target.date!==request.date||
+     target.venueCode!==request.venueCode||target.raceNumber!==request.raceNumber)
+   throw new Problem(409,'EXHIBITION_PARENT_UNAVAILABLE');
+  const parent=await this.project(row);
+  if(parent.result?.status!=='AVAILABLE'||parent.result.odds!==null)
+   throw new Problem(409,'EXHIBITION_PARENT_UNAVAILABLE');
+  return {row,result:parent.result};
+ }
+ async pricingSource(id:string,page?:string){
+  const row=await this.repo.statement('get').bind(id).first<Row>();
+  if(!row||row.state!=='RUNNING'||!row.lease_until||row.lease_until<=new Date().toISOString())
+   throw new Problem(409,'JOB_NOT_RUNNING');
+  const request=JSON.parse(row.request) as PredictionRequest;
+  if(!request.oddsFromJobId)throw new Problem(409,'EXHIBITION_PARENT_UNAVAILABLE');
+  const parent=await this.exhibitionParent(request,row.owner,row.execution_mode);
+  if(!page)return parent.result;
+  if(row.execution_mode!=='LIVE'||!['racelist','beforeinfo','input'].includes(page))throw new Problem(404,'INVALID_PAGE');
+  const rows=(await this.repo.statement('jobArtifacts').bind(parent.row.id).all<{kind:string;key:string;sha256:string}>()).results;
+  const ref=rows.find(item=>item.kind===(page==='input'?'input':'source-'+page));
+  const raw=ref&&await this.bucket?.read(ref.key,'source');
+  if(!raw||!ref||await sha256(raw)!==ref.sha256)throw new Problem(409,'SOURCE_REFERENCE_TAMPERED');
+  return raw;
  }
  async finish(id:string,state:'HELD'|'FAILED',reasons:string[]){await this.repo.statement('finish').bind(state,JSON.stringify(reasons),new Date().toISOString(),id).run();}
  private async verifySources(id:string,refs:string[],hasOdds=false){
   if(!this.bucket)throw new Problem(503,'SOURCE_STORAGE_UNAVAILABLE');const job=await this.repo.statement('get').bind(id).first<Row>();if(!job)throw new Problem(404,'JOB_NOT_FOUND');
   const rows=(await this.repo.statement('jobArtifacts').bind(id).all<{kind:string;key:string;sha256:string}>()).results;
-  if(job.execution_mode==='LIVE'){const required=['source-racelist',...(JSON.parse(job.request).mode==='R5_PRE_RACE'?['source-beforeinfo']:[]),...(hasOdds?['source-odds3t']:[])];for(const kind of required)if(!rows.some(row=>row.kind===kind&&refs.includes(row.sha256)))throw new Problem(409,'LIVE_SOURCE_PAGE_MISSING');}
+  const request=JSON.parse(job.request) as PredictionRequest;
+  if(request.oddsFromJobId)await this.exhibitionParent(request,job.owner,job.execution_mode);
+  if(job.execution_mode==='LIVE'){const required=request.oddsFromJobId?['source-odds3t']:['source-racelist',...(JSON.parse(job.request).mode==='R5_PRE_RACE'?['source-beforeinfo']:[]),...(hasOdds?['source-odds3t']:[])];for(const kind of required)if(!rows.some(row=>row.kind===kind&&refs.includes(row.sha256)))throw new Problem(409,'LIVE_SOURCE_PAGE_MISSING');}
   for(const row of rows)if(row.kind.startsWith('source-')&&!refs.includes(row.sha256))throw new Problem(409,'SOURCE_REFERENCE_MISSING');
   for(const ref of refs){const row=rows.find(x=>x.sha256===ref);if(!row)throw new Problem(409,'SOURCE_REFERENCE_UNREGISTERED');const raw=await this.bucket.read(row.key,ref===job.expected_model_sha256?'model':'source');if(!raw||await sha256(raw)!==ref)throw new Problem(409,'SOURCE_REFERENCE_TAMPERED');}
  }
@@ -48,10 +84,22 @@ export class PredictionJobs {
  const raw=JSON.stringify(value),bytes=new TextEncoder().encode(raw),hash=await sha256(bytes);
  if(row.result){const previous=JSON.parse(row.result);if(previous.sha256!==hash)throw new Problem(409,'RESULT_CONFLICT');return this.detail(id);}
  if(row.state!=='RUNNING'||!row.lease_until||row.lease_until<new Date().toISOString())throw new Problem(409,'JOB_NOT_RUNNING');
+ const request=JSON.parse(row.request) as PredictionRequest;
+ const parent=request.oddsFromJobId?await this.exhibitionParent(request,row.owner,row.execution_mode):null;
+ if(request.exhibitionOnly&&value.odds!==null)throw new Problem(409,'EXHIBITION_ODDS_FORBIDDEN');
+ if(parent&&value.status==='AVAILABLE'){
+  if(value.odds===null||value.inputSha256!==parent.result.inputSha256||value.modelSha256!==parent.result.modelSha256||value.cutoffAt!==parent.result.cutoffAt||
+     value.observedAt!==parent.result.observedAt||
+     JSON.stringify(value.combinations)!==JSON.stringify(parent.result.combinations)||
+     JSON.stringify(value.probabilities)!==JSON.stringify(parent.result.probabilities)||
+     JSON.stringify(value.finishByLane)!==JSON.stringify(parent.result.finishByLane))
+   throw new Problem(409,'EXHIBITION_PARENT_RESULT_MISMATCH');
+  await this.verifySources(id,value.sourceRefs,true);
+ }
  const input=await this.repo.statement('inputHash').bind(id).first<{sha256:string}>();const mode=JSON.parse(row.request).mode;const expectedInput=row.execution_mode==='SAVED_REPLAY'?row.expected_input_sha256:input?.sha256;const expectedModel=row.expected_model_sha256;
  if(value.executionMode!==row.execution_mode)throw new Problem(409,'EXECUTION_MODE_MISMATCH');
- if(!this.bucket||value.requestSha256!==row.hash||value.status==='AVAILABLE'&&(!expectedInput||value.inputSha256!==expectedInput||!expectedModel||value.modelSha256!==expectedModel))throw new Problem(409,'COMPUTE_PROVENANCE_MISMATCH');
- if(value.status==='AVAILABLE'){
+ if(!this.bucket||value.requestSha256!==row.hash||value.status==='AVAILABLE'&&!parent&&(!expectedInput||value.inputSha256!==expectedInput||!expectedModel||value.modelSha256!==expectedModel))throw new Problem(409,'COMPUTE_PROVENANCE_MISMATCH');
+ if(value.status==='AVAILABLE'&&!parent){
   if(!expectedInput||!expectedModel||!value.sourceRefs.includes(expectedInput)||!value.sourceRefs.includes(expectedModel))throw new Problem(409,'SOURCE_REFERENCE_MISSING');
   for(const pin of Object.values(this.sourcePins)){if(value.sourceRefs.includes(pin.sha256)){const raw=await this.bucket.read(pin.key,pin.sha256===expectedModel?'model':'input');if(!raw||await sha256(raw)!==pin.sha256)throw new Problem(409,'PINNED_SOURCE_TAMPERED');await this.repo.statement('reserveArtifact').bind(id,'pin-'+pin.sha256,pin.sha256,pin.key,raw.length).run();}}
   await this.verifySources(id,value.sourceRefs,value.odds!==null);

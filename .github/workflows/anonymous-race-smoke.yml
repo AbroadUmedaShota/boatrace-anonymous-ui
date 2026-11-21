@@ -21,4 +21,7 @@ jobs:
           package-manager-cache: false
       - run: npm ci --no-audit --no-fund
       - run: npx --no-install playwright install --with-deps --only-shell chromium
-      - run: npm run ci:race-smoke
+      - name: Verify saved race and history
+        run: npm run ci:race-smoke
+      - name: Verify exhibition and odds history
+        run: npm run ci:race-smoke -- --staged

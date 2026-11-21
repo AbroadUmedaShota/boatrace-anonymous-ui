@@ -8,7 +8,7 @@ const rejectedBeforeCreate:Record<number,readonly string[]>={
  400:['INVALID_PREDICTION_REQUEST','TARGET_DATE_MODE_MISMATCH','INVALID_BODY','BODY_REQUIRED','QUERY_NOT_ALLOWED'],
  401:['TOKEN_REQUIRED','AMBIGUOUS_CREDENTIALS','INVALID_OR_EXPIRED_TOKEN','INVALID_OR_EXPIRED_ACCESS_TOKEN','ACCESS_ASSERTION_REQUIRED'],
  403:['FORBIDDEN_ROLE','PREDICTION_REQUEST_NOT_ALLOWED'],
- 409:['PREDICTION_ACCEPTANCE_CLOSED','RECOVERY_REQUIRED','CLOUD_OWNER_SAVED_TARGET_NOT_APPROVED'],
+ 409:['EXHIBITION_PARENT_UNAVAILABLE','EXHIBITION_PARENT_STALE','PREDICTION_ACCEPTANCE_CLOSED','RECOVERY_REQUIRED','CLOUD_OWNER_SAVED_TARGET_NOT_APPROVED'],
  429:['SHARED_QUOTA_OR_COOLDOWN'],
 };
 function problemCode(value:unknown):string|undefined {
@@ -27,7 +27,9 @@ export async function predictionRequestError(response:Response,operation:'READ'|
   error.name='RecoveryRequired';return error;
  }
  const messages:Record<number,string>={401:'認証が無効または期限切れです。再接続してください。',403:'予想依頼または閲覧の権限がありません。',404:'依頼が見つからないか、閲覧できません。',409:'同じ依頼の内容が異なるか、処理状態が競合しています。',429:'共有環境の利用上限が通知されました。受付状態を確認してください。'};
- const message=notAccepted&&response.status===429?'共有上限または同じ対象の待機時間により、依頼を受け付けていません。条件や待機時間を確認してください。':
+ const message=notAccepted&&code==='EXHIBITION_PARENT_STALE'?'元の展示予想が古いか発売締切を過ぎたため、オッズを取得できません。':
+  notAccepted&&code==='EXHIBITION_PARENT_UNAVAILABLE'?'この依頼に使える展示予想を確認できません。':
+  notAccepted&&response.status===429?'共有上限または同じ対象の待機時間により、依頼を受け付けていません。条件や待機時間を確認してください。':
   notAccepted&&response.status===400?'指定した条件を受け付けられません。対象日・予想の種類・入力値を確認してください。':
   notAccepted&&code==='PREDICTION_ACCEPTANCE_CLOSED'?'現在、新しい予想依頼の受付は停止しています。':
   notAccepted&&code==='CLOUD_OWNER_SAVED_TARGET_NOT_APPROVED'?'登録済みの保存入力から対象を選び、改めて依頼してください。':messages[response.status]??`サービスを確認できません（HTTP ${response.status}）。`;
