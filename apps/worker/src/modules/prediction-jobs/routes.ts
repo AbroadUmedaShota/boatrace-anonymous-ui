@@ -82,3 +82,14 @@ predictionJobRoutes.post('/api/internal/prediction-jobs/:id/source-artifacts/:pa
 predictionJobRoutes.get('/api/internal/compute-artifacts/:group/:id',async c=>{compute(c.get('identity'),c.env);const artifact=await service(c.env).getPinned(c.req.param('group'),c.req.param('id'));return new Response(new Uint8Array(artifact.raw).buffer,{headers:{'Content-Type':'application/octet-stream','X-Content-Sha256':artifact.sha256,'Cache-Control':'no-store'}});});
 
 predictionJobRoutes.post('/api/internal/prediction-jobs/:id/reserve-acquisition',async c=>{compute(c.get('identity'),c.env);const value=await body(c.req.raw) as {targetDay:string;venueCode:string;raceNumber:number};if(!value||Object.keys(value).sort().join()!=='raceNumber,targetDay,venueCode')throw new Problem(400,'INVALID_BODY');return c.json(await service(c.env).reserveAcquisition(c.req.param('id'),value));});
+
+predictionJobRoutes.get('/api/internal/prediction-jobs/:id/pricing-source',async c=>{
+ compute(c.get('identity'),c.env);
+ return c.json(await service(c.env).pricingSource(c.req.param('id')));
+});
+predictionJobRoutes.get('/api/internal/prediction-jobs/:id/pricing-source/:page',async c=>{
+ compute(c.get('identity'),c.env);
+ const raw=await service(c.env).pricingSource(c.req.param('id'),c.req.param('page'));
+ if(!(raw instanceof Uint8Array))throw new Problem(404,'INVALID_PAGE');
+ return new Response(new Uint8Array(raw).buffer,{headers:{'Content-Type':'application/octet-stream','Cache-Control':'no-store'}});
+});

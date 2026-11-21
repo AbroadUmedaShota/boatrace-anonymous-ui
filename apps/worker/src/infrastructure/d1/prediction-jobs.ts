@@ -24,6 +24,12 @@ claim:"UPDATE prediction_jobs SET state='RUNNING',lease_until=?,updated_at=? WHE
 // The same expiration predicate gates the INSERT atomically and explains its rejection.
 const EXPIRED_UNRESOLVED="result IS NULL AND ((state='RUNNING' AND lease_until<?) OR (state='QUEUED' AND created_at<?))";
 OPERATIONS.usage=`SELECT (SELECT count(*) FROM prediction_jobs WHERE substr(datetime(created_at,'+9 hours'),1,10)=?) AS own_jobs,coalesce((SELECT jobs FROM legacy_acquisition_usage WHERE day=?),0) AS legacy_jobs,(SELECT count(*) FROM prediction_fetch_permits WHERE substr(datetime(created_at,'+9 hours'),1,10)=?) AS own_http,coalesce((SELECT requests FROM legacy_acquisition_usage WHERE day=?),0) AS legacy_http,EXISTS(SELECT 1 FROM prediction_jobs WHERE ${EXPIRED_UNRESOLVED}) AS recovery_required`;
+// One price job per saved exhibition result, with the same shared daily job budget.
+OPERATIONS.reserveOdds=OPERATIONS.reserve.replace(
+ 'AND NOT EXISTS(SELECT 1 FROM prediction_jobs WHERE json_extract(request',
+ "AND NOT EXISTS(SELECT 1 FROM prediction_jobs WHERE json_extract(request,'$.oddsFromJobId') IS NOT NULL AND json_extract(request"
+) + " AND NOT EXISTS(SELECT 1 FROM prediction_jobs WHERE json_extract(request,'$.oddsFromJobId')=?)";
+OPERATIONS.reserveOddsGuarded=OPERATIONS.reserveOdds+' AND NOT EXISTS(SELECT 1 FROM prediction_jobs WHERE '+EXPIRED_UNRESOLVED+')';
 OPERATIONS.reserveGuarded=OPERATIONS.reserve+' AND NOT EXISTS(SELECT 1 FROM prediction_jobs WHERE '+EXPIRED_UNRESOLVED+')';
 OPERATIONS.expiredUnresolved='SELECT id FROM prediction_jobs WHERE '+EXPIRED_UNRESOLVED+' LIMIT 1';
 export class D1PredictionJobs implements PredictionJobRepository {constructor(private db:D1Database){}statement(operation:string):JobStatement {const sql=OPERATIONS[operation];if(!sql)throw new Error('UNKNOWN_JOB_OPERATION');return this.db.prepare(sql) as JobStatement;}}

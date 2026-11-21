@@ -1,3 +1,5 @@
+import {RACE_CATALOG_MIGRATION} from '../../apps/worker/src/infrastructure/d1/race-catalog';
+import {RACE_OUTCOME_MIGRATION} from '../../apps/worker/src/infrastructure/d1/race-outcomes';
 import {RACE_CONTEXT_MIGRATION} from '../../apps/worker/src/infrastructure/d1/race-context';
 import {build} from 'esbuild';
 import {Miniflare} from 'miniflare';
@@ -71,7 +73,7 @@ export async function startRuntime(state: string, port = 0, secret?: string, opt
   try {
     const db = await mf.getD1Database('DB');
     // D1 exec expects each statement on one physical line.
-    for (const statement of (MIGRATION + SAVED_RACE_MIGRATION + JOB_MIGRATION + ";" + RACE_CONTEXT_MIGRATION+(stores.d1BlobsRequired?';'+D1_COMPUTE_ARTIFACT_MIGRATION:'')).split(';').map(s => s.trim()).filter(Boolean))
+    for (const statement of (MIGRATION + SAVED_RACE_MIGRATION + JOB_MIGRATION + ";" + RACE_CONTEXT_MIGRATION+';'+RACE_OUTCOME_MIGRATION+';'+RACE_CATALOG_MIGRATION+(stores.d1BlobsRequired?';'+D1_COMPUTE_ARTIFACT_MIGRATION:'')).split(';').map(s => s.trim()).filter(Boolean))
       await db.prepare(statement).run();
     const jobColumns=(await db.prepare('PRAGMA table_info(prediction_jobs)').all<{name:string}>()).results.map(c=>c.name);
     for(const [name,type] of [['execution_mode',"TEXT NOT NULL DEFAULT 'SAVED_REPLAY'"],['expected_input_sha256','TEXT'],['expected_model_sha256','TEXT']])if(!jobColumns.includes(name))await db.prepare('ALTER TABLE prediction_jobs ADD COLUMN '+name+' '+type).run();

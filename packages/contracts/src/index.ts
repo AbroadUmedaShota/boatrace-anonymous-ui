@@ -163,3 +163,6 @@ export function parseLatestEvaluation(value: unknown): LatestEvaluationResponse 
 export * from './prediction-jobs';
 export * from './compute-dispatch';
 export * from './cloud-owner-policy';
+
+export {parseRaceOutcome,type RaceOutcome} from './race-outcome';
+export {parseRaceCatalog,type RaceCatalog} from './race-catalog';

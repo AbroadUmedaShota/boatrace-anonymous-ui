@@ -1,3 +1,5 @@
+import {raceCatalogRoutes} from './modules/race-catalog/routes';
+import {raceOutcomeRoutes} from './modules/race-outcomes/routes';
 import {raceContextRoutes} from './modules/race-context/routes';
 import {Hono} from 'hono';
 import {compose, type Bindings} from './composition';
@@ -106,6 +108,8 @@ app.post('/api/admin/latest', async c => {
   return c.json(await compose(c.env).setLatest(value.evaluation_id));
 });
 app.route('/', raceContextRoutes);
+app.route('/', raceOutcomeRoutes);
+app.route('/', raceCatalogRoutes);
 app.route('/', savedRaceRoutes);
 app.route('/', predictionJobRoutes);
 app.notFound(async c => {
